@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Analizator Pogody - Dataset Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 20px; background: #f8f9fa; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .tool-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px dashed #6c757d; }
+        .chart-container { height: 400px; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #007bff; color: white; }
+        .btn-seed { background: #6c757d; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        .btn-download { background: #17a2b8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌤️ Panel Meteorologiczny & Seeder</h1>
+
+        <form action="/fetch" method="POST" style="margin-bottom: 20px;">
+            <input type="text" name="city" placeholder="Pobierz z API (np. Warszawa)..." required style="padding: 10px; width: 250px;">
+            <button type="submit" style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px;">Pobierz teraz</button>
+        </form>
+
+        <div class="tool-box">
+            <h3>🧪 Inżynieria Danych: Generator Datasetów</h3>
+            <form action="/seed" method="POST" style="display: inline;">
+                <input type="text" name="city" placeholder="Nazwa miasta do symulacji" style="padding: 8px;">
+                <button type="submit" class="btn-seed">Generuj 100 pomiarów (CSV + DB)</button>
+            </form>
+            <a href="/download" class="btn-download">Pobierz ostatni CSV</a>
+        </div>
+
+        <div class="chart-container">
+            <h3>Wykres dla: {{ city_name }}</h3>
+            <canvas id="weatherChart"></canvas>
+        </div>
+
+        <h2>Ostatnie wpisy w bazie:</h2>
+        <table>
+            <tr><th>Czas</th><th>Miasto</th><th>Temp</th><th>Opis</th></tr>
+            {% for entry in data %}
+            <tr>
+                <td>{{ entry.timestamp }}</td>
+                <td>{{ entry.name }}</td>
+                <td>{{ entry.main.temp }}°C</td>
+                <td>{{ entry.weather[0].description }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('weatherChart').getContext('2d');
+       
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ labels|tojson }},
+                datasets: [{
+                    label: 'Temperatura (°C)',
+                    data: {{ temps|tojson }},
+                    borderColor: '#007bff',
+                    tension: 0.3,
+                    fill: true,
+                    backgroundColor: 'rgba(0,123,255,0.1)'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    </script>
+</body>
+</html>
